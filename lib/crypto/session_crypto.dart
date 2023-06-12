@@ -10,9 +10,7 @@ class SessionCrypto {
   late final String sessionId;
 
   SessionCrypto({String? pk}) {
-    privateKey = pk != null
-        ? PrivateKey(Uint8List.fromList(pk.codeUnits))
-        : PrivateKey.generate();
+    privateKey = pk != null ? PrivateKey.decode(pk) : PrivateKey.generate();
 
     sessionId = HEX.encode(privateKey.publicKey);
   }

@@ -1,6 +1,6 @@
 name: darttonconnect
 description: Dart SDK for TON Connect.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/romanovichim/dartTonconnect
 
 environment:

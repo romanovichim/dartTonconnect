@@ -71,7 +71,7 @@ class BridgeProvider extends BaseProvider {
     }
     final decodeConnection = jsonDecode(connection) as Map<String, dynamic>;
 
-    if (decodeConnection.containsKey('session')) {
+    if (!decodeConnection.containsKey('session')) {
       return false;
     }
     _session = BridgeSession(stored: decodeConnection['session']);

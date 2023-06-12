@@ -28,25 +28,6 @@ class BridgeGateway {
     resolve = Completer();
   }
 
-  Future<void> listenEventSource() async {
-    try {
-      await for (var event in _eventSource!.onMessage) {
-        logger.d(event);
-        await _messagesHandler(event);
-      }
-    } on TimeoutException {
-      logger.e('Bridge error -> TimeoutError');
-    } on ClientException {
-      logger.e('Bridge error -> ClientConnectionError');
-    } catch (e) {
-      logger.e('Bridge error -> Unknown');
-    }
-
-    if (!resolve.isCompleted) {
-      resolve.complete(false);
-    }
-  }
-
   Future<bool> registerSession() async {
     if (_isClosed) {
       return false;
@@ -74,7 +55,16 @@ class BridgeGateway {
     });
 
     _eventSource!.onMessage.listen((event) async {
-      await listenEventSource();
+      try {
+        logger.d(event);
+        await _messagesHandler(event);
+      } on TimeoutException {
+        logger.e('Bridge error -> TimeoutError');
+      } on ClientException {
+        logger.e('Bridge error -> ClientConnectionError');
+      } catch (e) {
+        logger.e('Bridge error -> Unknown');
+      }
     });
 
     return await resolve.future;
