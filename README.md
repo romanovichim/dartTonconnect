@@ -54,30 +54,83 @@ Make sure that manifest is available to GET by its URL.
 
 If user connected his wallet before, connector will restore the connection
 
-TBD
+```
+import 'package:darttonconnect/ton_connect.dart';
+
+Future<void> main() async {
+  final connector = TonConnect('https://raw.githubusercontent.com/XaBbl4/pytonconnect/main/pytonconnect-manifest.json');
+  final bool isConnected = await connector.restoreConnection();
+  print('isConnected: $isConnected');
+}
+```
 
 ## Fetch wallets list
 
 You can fetch all supported wallets list
 
-TBD
+```
+import 'package:darttonconnect/ton_connect.dart';
+
+Future<void> main() async {
+  final connector = TonConnect('https://raw.githubusercontent.com/XaBbl4/pytonconnect/main/pytonconnect-manifest.json');
+  final List wallets = await connector.getWallets();
+  print('Wallets: $wallets');
+}
+```
 
 ## Subscribe to the connection status changes
 
-TBD
+```
+/// Update state/reactive variables to show updates in the ui.
+void statusChanged(dynamic walletInfo) {
+  print('Wallet info: $ walletInfo');
+}
+
+connector.onStatusChange(statusChanged);
+```
 
 ## Initialize a wallet connection via universal link
 
-TBD
+```
+import 'package:darttonconnect/ton_connect.dart';
 
-Then you have to show this link to user as QR-code, or use it as a deep_link. You will receive an update in `TBD` when user approves connection in the wallet.
+final generatedUrl = await connector.connect(wallets.first);
+print('Generated url: $generatedUrl');
+}
+```
+
+Then you have to show this link to user as QR-code, or use it as a deep_link. You will receive an update in console when user approves connection in the wallet.
 
 ## Send transaction
 
-TBD
+```
+const transaction = {
+  "validUntil": 1718097354,
+  "messages": [
+    {
+      "address":
+          "0:575af9fc97311a11f423a1926e7fa17a93565babfd65fe39d2e58b8ccb38c911",
+      "amount": "20000000",
+    }
+  ]
+};
+
+try {
+  await connector.sendTransaction(transaction);
+} catch (e) {
+  if (e is UserRejectsError) {
+    logger.d(
+        'You rejected the transaction. Please confirm it to send to the blockchain');
+  } else {
+    logger.d('Unknown error happened $e');
+  }
+}
+```
 
 ## Disconnect
 
-TBD
+```
+connector.disconnect();
+```
 
 
