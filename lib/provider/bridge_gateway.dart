@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:darttonconnect/async/async.dart';
 import 'package:http/http.dart';
 import 'package:universal_html/html.dart';
 
@@ -15,15 +14,14 @@ class BridgeGateway {
   static const int defaultTtl = 300;
 
   late Completer<bool> resolve;
-  late EventSource _eventSource;
-  AsyncTask? handleListen;
+  EventSource? _eventSource;
   bool _isClosed = false;
 
   final IStorage _storage;
   final String _bridgeUrl;
   final String _sessionId;
   final Function _listener;
-  final Function? _errorsListener;
+  final Function _errorsListener;
 
   BridgeGateway(this._storage, this._bridgeUrl, this._sessionId, this._listener,
       this._errorsListener) {
@@ -32,16 +30,16 @@ class BridgeGateway {
 
   Future<void> listenEventSource() async {
     try {
-      await for (var event in _eventSource.onMessage) {
+      await for (var event in _eventSource!.onMessage) {
+        logger.d(event);
         await _messagesHandler(event);
       }
     } on TimeoutException {
-      print('Bridge error -> TimeoutError');
+      logger.e('Bridge error -> TimeoutError');
     } on ClientException {
-      print('Bridge error -> ClientConnectionError');
+      logger.e('Bridge error -> ClientConnectionError');
     } catch (e) {
-      print('Bridge error -> Unknown');
-      print(e);
+      logger.e('Bridge error -> Unknown');
     }
 
     if (!resolve.isCompleted) {
@@ -54,7 +52,7 @@ class BridgeGateway {
       return false;
     }
 
-    final bridgeBase = _bridgeUrl.replaceFirst(RegExp(r'/*$'), '');
+    final bridgeBase = _bridgeUrl;
     var bridgeUrl = '$bridgeBase/$ssePath?client_id=$_sessionId';
 
     final lastEventId = await _storage.getItem(key: IStorage.keyLastEventId);
@@ -64,16 +62,19 @@ class BridgeGateway {
 
     logger.d('Bridge url -> $bridgeUrl');
 
-    _eventSource = EventSource(bridgeUrl, withCredentials: true);
+    if (_eventSource != null) {
+      _eventSource!.close();
+    }
 
-    _eventSource.onError.listen(_errorsHandler);
+    _eventSource = EventSource(bridgeUrl);
 
-    _eventSource.onOpen.listen((_) {
+    _eventSource!.onError.listen(_errorsHandler);
+    _eventSource!.onOpen.listen((_) {
       resolve.complete(true);
     });
 
-    _eventSource.onMessage.listen((event) async {
-      await _messagesHandler(event);
+    _eventSource!.onMessage.listen((event) async {
+      await listenEventSource();
     });
 
     return await resolve.future;
@@ -81,7 +82,8 @@ class BridgeGateway {
 
   Future<void> send(String request, String receiverPublicKey, String topic,
       {int? ttl}) async {
-    final bridgeBase = _bridgeUrl.replaceFirst(RegExp(r'/*$'), '');
+    final bridgeBase = _bridgeUrl;
+
     var bridgeUrl = '$bridgeBase/$postPath?client_id=$_sessionId';
     final ttlValue = ttl ?? defaultTtl;
     bridgeUrl += '&to=$receiverPublicKey&ttl=$ttlValue&topic=$topic';
@@ -93,7 +95,7 @@ class BridgeGateway {
   }
 
   void pause() {
-    _eventSource.close();
+    _eventSource!.close();
   }
 
   Future<void> unpause() async {
@@ -102,36 +104,31 @@ class BridgeGateway {
 
   Future<void> close() async {
     _isClosed = true;
-    _eventSource.close();
+    _eventSource!.close();
   }
 
   void _errorsHandler(Event event) {
     if (!_isClosed) {
-      switch (_eventSource.readyState) {
+      switch (_eventSource!.readyState) {
         case EventSource.CLOSED:
           logger.e('Bridge error -> CLOSED');
-          // TODO: reconnect
           break;
         case EventSource.CONNECTING:
           logger.e('Bridge error -> CONNECTING');
           break;
         default:
-          break;
-      }
-
-      if (_errorsListener != null) {
-        _errorsListener!();
+          _errorsListener();
       }
     }
   }
 
   Future<void> _messagesHandler(MessageEvent event) async {
-    final data = jsonDecode(event.data);
     await _storage.setItem(
-        key: IStorage.keyLastEventId, value: data['last_event_id']);
+        key: IStorage.keyLastEventId, value: event.lastEventId);
 
     if (!_isClosed) {
       try {
+        final data = jsonDecode(event.data);
         await _listener(data);
       } catch (e) {
         throw TonConnectError('Bridge listener failed');

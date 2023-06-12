@@ -41,11 +41,10 @@ class BridgeProvider extends BaseProvider {
     var bridgeUrl = '';
     var universalUrl = BridgeProvider.standartUniversalUrl;
 
-    bridgeUrl = _wallet['bridge_url'];
-    if (_wallet.containsKey('universal_url')) {
-      universalUrl = _wallet['universal_url'];
+    bridgeUrl = _wallet['bridgeUrl'];
+    if (_wallet.containsKey('universalUrl')) {
+      universalUrl = _wallet['universalUrl'];
     }
-
     _gateway = BridgeGateway(
       _storage,
       bridgeUrl,
@@ -110,7 +109,7 @@ class BridgeProvider extends BaseProvider {
     try {
       await Future.any([
         sendRequest({'method': 'disconnect', 'params': []}),
-        Future.delayed(Duration(seconds: disconnectTimeout)),
+        Future.delayed(const Duration(seconds: disconnectTimeout)),
       ]);
     } catch (e) {
       logger.e('Provider disconnect', e);
@@ -125,15 +124,11 @@ class BridgeProvider extends BaseProvider {
   }
 
   void pause() {
-    if (_gateway != null) {
-      _gateway!.pause();
-    }
+    _gateway?.pause();
   }
 
   Future<void> unpause() async {
-    if (_gateway != null) {
-      await _gateway!.unpause();
-    }
+    await _gateway?.unpause();
   }
 
   @override
@@ -143,8 +138,11 @@ class BridgeProvider extends BaseProvider {
     }
     final keyConnection =
         await _storage.getItem(key: IStorage.keyConnection, defaultValue: '{}');
-    var connection = jsonDecode(keyConnection!);
-    var id = connection['next_rpc_request_id'].toString();
+    var connection = jsonDecode(keyConnection!) as Map<String, dynamic>;
+    var id = connection['next_rpc_request_id'] != null
+        ? connection['next_rpc_request_id'].toString()
+        : '0';
+
     connection['next_rpc_request_id'] = (int.parse(id) + 1).toString();
     await _storage.setItem(
         key: IStorage.keyConnection, value: jsonEncode(connection));
@@ -172,10 +170,10 @@ class BridgeProvider extends BaseProvider {
 
   Future<void> _gatewayListener(
       Map<String, dynamic> bridgeIncomingMessage) async {
-    final walletMessage = jsonDecode(
-      _session.sessionCrypto.decrypt(
-          bridgeIncomingMessage['message'], bridgeIncomingMessage['from']),
-    );
+    final String decryptMessage = _session.sessionCrypto.decrypt(
+        bridgeIncomingMessage['message'], bridgeIncomingMessage['from']);
+    final walletMessage = jsonDecode(decryptMessage) as Map<String, dynamic>;
+
     logger.d('Wallet message received: $walletMessage');
 
     if (!walletMessage.containsKey('event')) {
@@ -189,14 +187,13 @@ class BridgeProvider extends BaseProvider {
         _pendingRequests[id]!.complete(walletMessage);
         _pendingRequests.remove(id);
       }
-      return;
     }
 
     if (walletMessage.containsKey('id')) {
       final id = int.parse(walletMessage['id'].toString());
       final keyConnection = await _storage.getItem(
           key: IStorage.keyConnection, defaultValue: '{}');
-      var connection = jsonDecode(keyConnection!);
+      var connection = jsonDecode(keyConnection!) as Map<String, dynamic>;
       final lastId = connection.containsKey('last_wallet_event_id')
           ? connection['last_wallet_event_id']
           : 0;
@@ -215,7 +212,7 @@ class BridgeProvider extends BaseProvider {
       }
     }
 
-    final listeners = _listeners.toList();
+    final listeners = [..._listeners];
 
     if (walletMessage['event'] == 'connect') {
       await _updateSession(walletMessage, bridgeIncomingMessage['from']);
@@ -228,8 +225,8 @@ class BridgeProvider extends BaseProvider {
     }
   }
 
-  void _gatewayErrorsListener(dynamic e) {
-    throw TonConnectError('Bridge error ${jsonEncode(e ?? {})}');
+  void _gatewayErrorsListener() {
+    throw TonConnectError('Bridge error');
   }
 
   Future<void> _updateSession(
@@ -260,18 +257,16 @@ class BridgeProvider extends BaseProvider {
 
   String _generateUniversalUrl(
       String universalUrl, Map<String, dynamic> request) {
-    final version = 2;
+    const version = 2;
     final sessionId = _session.sessionCrypto.sessionId;
     final requestSafe = Uri.encodeComponent(jsonEncode(request));
-    final universalBase = universalUrl.replaceAll(RegExp(r'/$'), '');
-    final url = '$universalBase?v=$version&id=$sessionId&r=$requestSafe';
+
+    final url = '$universalUrl?v=$version&id=$sessionId&r=$requestSafe';
 
     return url;
   }
 
   void _closeGateways() {
-    if (_gateway != null) {
-      _gateway!.close();
-    }
+    _gateway?.close();
   }
 }

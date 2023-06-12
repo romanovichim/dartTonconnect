@@ -19,14 +19,11 @@ class TonConnect {
   List<void Function(dynamic value)> _statusChangeSubscriptions = [];
   List<void Function(dynamic value)> _statusChangeErrorSubscriptions = [];
 
-  // Shows if the wallet is connected right now.
+  /// Shows if the wallet is connected right now.
   bool get connected => wallet != null;
 
-  // Current connected account or None if no account is connected.
+  /// Current connected account or None if no account is connected.
   dynamic get account => connected ? wallet!.account : null;
-
-  // Current connected wallet or None if no account is connected.
-  // WalletInfo? get wallet => wallet;
 
   TonConnect(this._manifestUrl,
       {IStorage? customStorage,
@@ -42,11 +39,12 @@ class TonConnect {
     _statusChangeErrorSubscriptions = [];
   }
 
+  /// Return available wallets list.
   Future<List<Map<String, dynamic>>> getWallets() async {
-    // Return available wallets list.
     return await _walletsList.getWallets();
   }
 
+  /// Allows to subscribe to connection status changes and handle connection errors.
   Function onStatusChange(void Function(dynamic value) callback,
       [void Function(dynamic value)? errorsHandler]) {
     _statusChangeSubscriptions.add(callback);
@@ -67,7 +65,9 @@ class TonConnect {
     return unsubscribe;
   }
 
-  Future<dynamic> connect(dynamic wallet, [dynamic request]) async {
+  /// Generates universal link for an external wallet and subscribes to the wallet's bridge,
+  /// or sends connect request to the injected wallet.
+  Future<String> connect(dynamic wallet, [dynamic request]) async {
     if (connected) {
       throw WalletAlreadyConnectedError(null);
     }
@@ -81,6 +81,8 @@ class TonConnect {
     return await provider!.connect(_createConnectRequest(request));
   }
 
+  /// Try to restore existing session and reconnect to the corresponding wallet.
+  /// Call it immediately when your app is loaded.
   Future<bool> restoreConnection() async {
     try {
       provider = BridgeProvider(storage);
@@ -97,6 +99,7 @@ class TonConnect {
     return await provider!.restoreConnection();
   }
 
+  /// Asks connected wallet to sign and send the transaction.
   Future<dynamic> sendTransaction(Map<String, dynamic> transaction) async {
     if (!connected) {
       throw WalletNotConnectedError(null);
@@ -108,9 +111,9 @@ class TonConnect {
     _checkSendTransactionSupport(wallet!.device!.features, options);
 
     Map<String, dynamic> request = {
-      'valid_until': transaction['valid_until'],
+      'valid_until': transaction['validUntil'],
       'from': transaction['from'] ?? wallet!.account!.address,
-      'network': transaction['network'] ?? wallet!.account!.chain,
+      'network': transaction['network'] ?? wallet!.account!.chain.value,
       'messages': transaction['messages'] ?? []
     };
 
@@ -124,19 +127,22 @@ class TonConnect {
     return SendTransactionParser().convertFromRpcResponse(response);
   }
 
+  /// Disconnect from wallet and drop current session.
   Future<void> disconnect() async {
     if (!connected) {
       throw WalletNotConnectedError(null);
     }
 
-    await provider?.disconnect();
+    await provider!.disconnect();
     _onWalletDisconnected();
   }
 
+  /// Pause bridge HTTP connection. Might be helpful, if you use SDK on backend and want to save server resources.
   void pauseConnection() {
     provider?.pause();
   }
 
+  /// Unpause bridge HTTP connection if it is paused.
   Future<void> unpauseConnection() async {
     await provider?.unpause();
   }

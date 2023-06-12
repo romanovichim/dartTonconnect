@@ -5,6 +5,7 @@ import 'package:hex/hex.dart';
 import 'package:pinenacl/ed25519.dart';
 
 import 'package:darttonconnect/exceptions.dart';
+import 'package:darttonconnect/logger.dart';
 
 enum ConnectEventErrorCodes {
   unknownError,
@@ -41,8 +42,15 @@ class ConnectEventErrors {
 }
 
 enum CHAIN {
-  mainnet,
-  testnet,
+  mainnet('-239'),
+  testnet('-3');
+
+  const CHAIN(this.value);
+  final String value;
+
+  static CHAIN getChainByValue(String code) {
+    return CHAIN.values.firstWhere((e) => e.value == code);
+  }
 }
 
 class DeviceInfo {
@@ -51,7 +59,7 @@ class DeviceInfo {
   late String appName; // e.g. "Tonkeeper"
   late String appVersion; // e.g. "2.3.367"
   late int maxProtocolVersion;
-  late List<Map<String, dynamic>> features;
+  late List<dynamic> features;
 
   static DeviceInfo fromMap(Map<String, dynamic> device) {
     final deviceInfo = DeviceInfo();
@@ -59,23 +67,23 @@ class DeviceInfo {
     deviceInfo.appName = device['appName'];
     deviceInfo.appVersion = device['appVersion'];
     deviceInfo.maxProtocolVersion = device['maxProtocolVersion'];
-    deviceInfo.features = List<Map<String, dynamic>>.from(device['features']);
+    deviceInfo.features = device['features'];
     return deviceInfo;
   }
 }
 
 class Account {
-// User's address in "hex" format: "<wc>:<hex>"
+  // User's address in "hex" format: "<wc>:<hex>"
   late String address;
 
-// User's selected chain
+  // User's selected chain
   late CHAIN chain;
 
-// Base64 (not url safe) encoded wallet contract state_init.
-// Can be used to get user's public key from the state_init if the wallet contract doesn't support corresponding method
+  // Base64 (not url safe) encoded wallet contract state_init.
+  // Can be used to get user's public key from the state_init if the wallet contract doesn't support corresponding method
   late String walletStateInit;
 
-// Hex string without 0x prefix
+  // Hex string without 0x prefix
   late String publicKey;
 
   @override
@@ -88,10 +96,7 @@ class Account {
 
     final account = Account();
     account.address = tonAddr['address'];
-    account.chain =
-        tonAddr['network'] == CHAIN.mainnet.toString().split('.').last
-            ? CHAIN.mainnet
-            : CHAIN.testnet;
+    account.chain = CHAIN.getChainByValue(tonAddr['network']);
     account.walletStateInit = tonAddr['walletStateInit'];
     account.publicKey =
         tonAddr.containsKey('publicKey') ? tonAddr['publicKey'] : null;
@@ -178,10 +183,10 @@ class WalletInfo {
       verifyKey.verify(
           message: Uint8List.fromList(sha256.convert(signatureMessage).bytes),
           signature: tonProof!.signature);
-      print('PROOF IS OK');
+      logger.d('PROOF IS OK');
       return true;
     } catch (e) {
-      print('PROOF ERROR');
+      logger.e('PROOF ERROR');
       return false;
     }
   }

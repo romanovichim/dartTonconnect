@@ -1,7 +1,7 @@
 class TonConnectError implements Exception {
   final String prefix = '[TON_CONNECT_SDK_ERROR]';
-  late String? info;
-  late String? message;
+  String? info;
+  String? message;
 
   TonConnectError(this.message);
 
