@@ -27,11 +27,38 @@ If you implement an SDK, a wallet or want to learn more how Ton Connect works, p
 
 ## Tutorials
 
-ENG | RU TBD
+[ENG](https://dev.to/roma_i_m/how-to-authorize-the-ton-blockchain-on-dart-using-a-wallet-via-ton-connect-edo) | [RU](https://habr.com/ru/articles/742036/) 
 
 # Installation
 
-TBD
+##### Run this command:
+
+With Dart:
+
+	 $ dart pub add darttonconnect
+This will add a line like this to your package's pubspec.yaml (and run an implicit `dart pub get`):
+
+	dependencies:
+	  darttonconnect: ^1.0.1
+Alternatively, your editor might support `dart pub get`. Check the docs for your editor to learn more.
+
+##### Import it
+Now in your Dart code, you can use:
+
+	import 'package:darttonconnect/crypto/session_crypto.dart';
+	import 'package:darttonconnect/exceptions.dart';
+	import 'package:darttonconnect/logger.dart';
+	import 'package:darttonconnect/parsers/connect_event.dart';
+	import 'package:darttonconnect/parsers/rpc_parser.dart';
+	import 'package:darttonconnect/parsers/send_transaction.dart';
+	import 'package:darttonconnect/provider/bridge_gateway.dart';
+	import 'package:darttonconnect/provider/bridge_provider.dart';
+	import 'package:darttonconnect/provider/bridge_session.dart';
+	import 'package:darttonconnect/provider/provider.dart';
+	import 'package:darttonconnect/storage/default_storage.dart';
+	import 'package:darttonconnect/storage/interface.dart';
+	import 'package:darttonconnect/ton_connect.dart';
+	import 'package:darttonconnect/wallets_list_manager.dart';
 
 # Examples
 ## Add the tonconnect-manifest
