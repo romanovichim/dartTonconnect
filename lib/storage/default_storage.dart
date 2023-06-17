@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:darttonconnect/storage/interface.dart';
 
 class DefaultStorage implements IStorage {
+  final String storagePrefix = 'darttonconnect_';
+
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   DefaultStorage();
@@ -13,7 +15,8 @@ class DefaultStorage implements IStorage {
     required String value,
   }) async {
     final SharedPreferences prefs = await _prefs;
-    prefs.setString(key, value);
+    final String storageKey = _getStorageKey(key);
+    prefs.setString(storageKey, value);
   }
 
   @override
@@ -22,7 +25,8 @@ class DefaultStorage implements IStorage {
     String? defaultValue,
   }) async {
     final SharedPreferences prefs = await _prefs;
-    final String? result = prefs.getString(key);
+    final String storageKey = _getStorageKey(key);
+    final String? result = prefs.getString(storageKey);
     if (result == null) {
       return defaultValue;
     }
@@ -32,6 +36,11 @@ class DefaultStorage implements IStorage {
   @override
   Future<void> removeItem({required String key}) async {
     final SharedPreferences prefs = await _prefs;
-    await prefs.remove(key);
+    final String storageKey = _getStorageKey(key);
+    await prefs.remove(storageKey);
+  }
+
+  String _getStorageKey(String key) {
+    return storagePrefix + key;
   }
 }

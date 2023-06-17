@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:pinenacl/ed25519.dart';
-
 import 'package:darttonconnect/crypto/session_crypto.dart';
 import 'package:darttonconnect/provider/bridge_gateway.dart';
 import 'package:darttonconnect/provider/bridge_session.dart';
@@ -233,7 +231,6 @@ class BridgeProvider extends BaseProvider {
       Map<String, dynamic> connectEvent, String walletPublicKey) async {
     _session.walletPublicKey = walletPublicKey;
 
-    PublicKey;
     final connection = {
       'type': 'http',
       'session': _session.getMap(),

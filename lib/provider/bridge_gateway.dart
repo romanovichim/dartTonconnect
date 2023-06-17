@@ -28,9 +28,9 @@ class BridgeGateway {
     resolve = Completer();
   }
 
-  Future<bool> registerSession() async {
+  Future<void> registerSession() async {
     if (_isClosed) {
-      return false;
+      return;
     }
 
     final bridgeBase = _bridgeUrl;
@@ -56,7 +56,6 @@ class BridgeGateway {
 
     _eventSource!.onMessage.listen((event) async {
       try {
-        logger.d(event);
         await _messagesHandler(event);
       } on TimeoutException {
         logger.e('Bridge error -> TimeoutError');
@@ -66,8 +65,6 @@ class BridgeGateway {
         logger.e('Bridge error -> Unknown');
       }
     });
-
-    return await resolve.future;
   }
 
   Future<void> send(String request, String receiverPublicKey, String topic,
