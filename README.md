@@ -79,15 +79,27 @@ Make sure that manifest is available to GET by its URL.
 
 ## Init connector and call `restore_connection`.
 
-If user connected his wallet before, connector will restore the connection
+If user connected his wallet before, connector will restore the connection.Use the `connector.restoreConnection()` method to be called when the application or page is reloaded, for example:
 
 ```
 import 'package:darttonconnect/ton_connect.dart';
 
-Future<void> main() async {
-  final connector = TonConnect('https://raw.githubusercontent.com/XaBbl4/pytonconnect/main/pytonconnect-manifest.json');
-  final bool isConnected = await connector.restoreConnection();
-  print('isConnected: $isConnected');
+@override
+void initState() {
+  // Override default initState method to call restoreConnection
+  // method after screen reloading.
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!connector.connected) {
+      restoreConnection();
+    }
+  });
+}
+
+
+/// Restore connection from memory.
+void restoreConnection() {
+  connector.restoreConnection();
 }
 ```
 
