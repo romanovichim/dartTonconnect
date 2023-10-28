@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:darttonconnect/crypto/session_crypto.dart';
+import 'package:darttonconnect/models/wallet_app.dart';
 import 'package:darttonconnect/provider/bridge_gateway.dart';
 import 'package:darttonconnect/provider/bridge_session.dart';
 import 'package:darttonconnect/provider/provider.dart';
@@ -15,16 +16,16 @@ class BridgeProvider extends BaseProvider {
   static const String standartUniversalUrl = 'tc://';
 
   late IStorage _storage;
-  late Map<String, dynamic> _wallet;
+  WalletApp? _wallet;
 
   late BridgeSession _session;
   BridgeGateway? _gateway;
   late Map<String, Completer<Map<String, dynamic>>> _pendingRequests;
   late List<dynamic> _listeners;
 
-  BridgeProvider(IStorage storage, {Map<String, dynamic>? wallet}) {
+  BridgeProvider(IStorage storage, {WalletApp? wallet}) {
     _storage = storage;
-    _wallet = wallet ?? {};
+    _wallet = wallet;
 
     _session = BridgeSession();
     _gateway = null;
@@ -36,13 +37,9 @@ class BridgeProvider extends BaseProvider {
     _closeGateways();
     final sessionCrypto = SessionCrypto();
 
-    var bridgeUrl = '';
-    var universalUrl = BridgeProvider.standartUniversalUrl;
-
-    bridgeUrl = _wallet['bridge_url'];
-    if (_wallet.containsKey('universal_url')) {
-      universalUrl = _wallet['universal_url'];
-    }
+    String bridgeUrl = _wallet?.bridgeUrl ?? '';
+    String universalUrl = _wallet?.universalUrl ?? BridgeProvider.standartUniversalUrl;
+    
     _gateway = BridgeGateway(
       _storage,
       bridgeUrl,
