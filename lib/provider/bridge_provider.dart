@@ -39,9 +39,9 @@ class BridgeProvider extends BaseProvider {
     var bridgeUrl = '';
     var universalUrl = BridgeProvider.standartUniversalUrl;
 
-    bridgeUrl = _wallet['bridge_url'];
-    if (_wallet.containsKey('universal_url')) {
-      universalUrl = _wallet['universal_url'];
+    bridgeUrl = _wallet['bridgeUrl'];
+    if (_wallet.containsKey('universalUrl')) {
+      universalUrl = _wallet['universalUrl'];
     }
     _gateway = BridgeGateway(
       _storage,
