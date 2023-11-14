@@ -1,6 +1,6 @@
 name: darttonconnect
 description: Dart SDK for TON Connect. Use it to connect your app to TON wallets via TonConnect protocol.
-version: 1.0.2+1
+version: 1.0.3
 homepage: https://github.com/romanovichim/dartTonconnect
 
 environment:

@@ -1,5 +1,6 @@
 import 'package:darttonconnect/exceptions.dart';
 import 'package:darttonconnect/logger.dart';
+import 'package:darttonconnect/models/wallet_app.dart';
 import 'package:darttonconnect/parsers/connect_event.dart';
 import 'package:darttonconnect/parsers/send_transaction.dart';
 import 'package:darttonconnect/provider/bridge_provider.dart';
@@ -40,7 +41,7 @@ class TonConnect {
   }
 
   /// Return available wallets list.
-  Future<List<Map<String, dynamic>>> getWallets() async {
+  Future<List<WalletApp>> getWallets() async {
     return await _walletsList.getWallets();
   }
 
@@ -67,7 +68,7 @@ class TonConnect {
 
   /// Generates universal link for an external wallet and subscribes to the wallet's bridge,
   /// or sends connect request to the injected wallet.
-  Future<String> connect(dynamic wallet, [dynamic request]) async {
+  Future<String> connect(WalletApp wallet, [dynamic request]) async {
     if (connected) {
       throw WalletAlreadyConnectedError(null);
     }
@@ -181,7 +182,7 @@ class TonConnect {
     }
   }
 
-  BridgeProvider _createProvider(Map<String, dynamic> wallet) {
+  BridgeProvider _createProvider(WalletApp wallet) {
     BridgeProvider provider = BridgeProvider(storage, wallet: wallet);
     provider.listen(_walletEventsListener);
     return provider;

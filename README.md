@@ -112,7 +112,7 @@ import 'package:darttonconnect/ton_connect.dart';
 
 Future<void> main() async {
   final connector = TonConnect('https://raw.githubusercontent.com/XaBbl4/pytonconnect/main/pytonconnect-manifest.json');
-  final List wallets = await connector.getWallets();
+  final List<WalletApp> wallets = await connector.getWallets();
   print('Wallets: $wallets');
 }
 ```
